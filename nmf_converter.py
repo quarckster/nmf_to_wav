@@ -18,7 +18,7 @@ __version__ = "0.1"
 # Map of types compressions of the nmf file and
 # ffmpeg decoders
 codecs = {
-    0: "g723_1",
+    0: "g729",
     1: "adpcm_g726",
     2: "adpcm_g726",
     7: "pcm_mulaw",
@@ -92,16 +92,11 @@ def chunks_generator(path_to_file):
 def convert_to_wav(path_to_file):
     "Convert raw audio data using ffmpeg and subprocess."
     previous_stream_id = -1
-    ps = None
+    processes = {}
     for compression, stream_id, raw_audio_chunk in chunks_generator(path_to_file):
-        if stream_id != previous_stream_id:
-            try:
-                ps.stdin.close()
-                ps.wait()
-            except AttributeError:
-                pass
+        if stream_id != previous_stream_id and not processes.get(stream_id):
             output_file = os.path.splitext(path_to_file)[0] + "_stream{}".format(stream_id) + ".wav"
-            ps = subprocess.Popen(
+            processes[stream_id] = subprocess.Popen(
                 ("ffmpeg",
                  "-hide_banner",
                  "-y",
@@ -113,9 +108,10 @@ def convert_to_wav(path_to_file):
                 stdin=subprocess.PIPE
             )
             previous_stream_id = stream_id
-        ps.stdin.write(raw_audio_chunk)
-    ps.stdin.close()
-    ps.wait()
+        processes[stream_id].stdin.write(raw_audio_chunk)
+    for key in processes.keys():
+        processes[key].stdin.close()
+        processes[key].wait()
 
 
 if __name__ == "__main__":
