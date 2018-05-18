@@ -21,7 +21,7 @@ codecs = {
     0: "g729",
     1: "adpcm_g726",
     2: "adpcm_g726",
-	3: "alaw",
+    3: "alaw",
     7: "pcm_mulaw",
     8: "g729",
     9: "g723_1",
